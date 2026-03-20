@@ -782,6 +782,7 @@ SOURCE_URL_PATTERNS = {
 }
 
 LATIN_TEXT_RE = re.compile(r"[A-Za-z]")
+LATIN_TOKEN_RE = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*")
 
 
 class PipelineError(RuntimeError):
@@ -1253,8 +1254,25 @@ def build_generation_payload(item: Dict[str, Any]) -> str:
     return json.dumps(payload, ensure_ascii=False)
 
 
-def contains_latin_text(value: str) -> bool:
-    return bool(LATIN_TEXT_RE.search(value))
+def has_excessive_latin_text(values: Iterable[str]) -> bool:
+    total_latin_tokens = 0
+
+    for value in values:
+        latin_tokens = LATIN_TOKEN_RE.findall(value)
+        if not latin_tokens:
+            continue
+
+        total_latin_tokens += len(latin_tokens)
+        words = value.split()
+        pure_latin_tokens = [
+            token for token in latin_tokens if len(re.sub(r"[^A-Za-z]", "", token)) >= 3
+        ]
+
+        # Allow short brand/model fragments, but reject lines that are mostly Latin text.
+        if pure_latin_tokens and len(latin_tokens) >= max(3, len(words) // 2):
+            return True
+
+    return total_latin_tokens > 4
 
 
 def evaluate_impact_for_ukrainians(client: OpenAI, title: str) -> Dict[str, Any]:
@@ -1310,7 +1328,8 @@ def generate_ukrainian_post(client: OpenAI, item: Dict[str, Any]) -> Dict[str, s
                         "Пиши тільки українською. "
                         "Текст має бути природним, простим і коротким. "
                         "Без міток, без секцій, без офіційного тону. "
-                        "Не використовуй латиницю або іспанські слова в текстових полях. "
+                        "Не використовуй латиницю або іспанські слова в текстових полях, "
+                        "крім офіційних назв брендів чи моделей, якщо без них ніяк. "
                         "Поверни тільки JSON."
                     ),
                 },
@@ -1326,7 +1345,8 @@ def generate_ukrainian_post(client: OpenAI, item: Dict[str, Any]) -> Dict[str, s
                         "- максимум 8-12 слів у кожному рядку\n"
                         "- максимум 3 рядки до посилання\n"
                         "- без міток, без 'Чому', без вступів, без пояснювальних блоків\n"
-                        "- жодних іспанських слів, жодної латиниці, жодної рекламності\n"
+                        "- не використовуй іспанські слова; латиницю дозволяй лише для офіційних назв брендів, сервісів або моделей\n"
+                        "- без рекламності\n"
                         "- для локальних небезпечних або кримінальних подій пиши ще коротше, спокійно і фактологічно\n"
                         "- якщо це критична подія, не пиши емодзі тут, його додасть шаблон\n"
                         "- практичний вплив має бути продовженням, а не окремим блоком"
@@ -1356,8 +1376,8 @@ def generate_ukrainian_post(client: OpenAI, item: Dict[str, Any]) -> Dict[str, s
             last_error = f"OpenAI returned overly long lines for {item['url']}"
             continue
 
-        if any(contains_latin_text(value) for value in [title, line1, line2]):
-            last_error = f"OpenAI returned latin text for {item['url']}"
+        if has_excessive_latin_text([title, line1, line2]):
+            last_error = f"OpenAI returned too much latin text for {item['url']}"
             continue
 
         return {
