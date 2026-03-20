@@ -52,37 +52,37 @@ jobs:
           fi
           git commit -m "Update state.json [skip ci]"
           if ! git pull --rebase origin main; then
-            python - <<'PY'
-            import json
-            import subprocess
-            from pathlib import Path
+            python -c '
+import json
+import subprocess
+from pathlib import Path
 
-            def load_version(spec: str) -> dict:
-                raw = subprocess.check_output(["git", "show", spec], text=True)
-                return json.loads(raw)
+def load_version(spec: str) -> dict:
+    raw = subprocess.check_output(["git", "show", spec], text=True)
+    return json.loads(raw)
 
-            upstream = load_version(":2:state.json")
-            current = load_version(":3:state.json")
+upstream = load_version(":2:state.json")
+current = load_version(":3:state.json")
 
-            merged_urls = list(
-                dict.fromkeys(
-                    upstream.get("posted_urls", []) + current.get("posted_urls", [])
-                )
-            )[-500:]
+merged_urls = list(
+    dict.fromkeys(
+        upstream.get("posted_urls", []) + current.get("posted_urls", [])
+    )
+)[-500:]
 
-            candidates = [value for value in [upstream.get("last_run"), current.get("last_run")] if value]
-            last_run = max(candidates) if candidates else None
+candidates = [value for value in [upstream.get("last_run"), current.get("last_run")] if value]
+last_run = max(candidates) if candidates else None
 
-            merged = {
-                "posted_urls": merged_urls,
-                "last_run": last_run,
-            }
+merged = {
+    "posted_urls": merged_urls,
+    "last_run": last_run,
+}
 
-            Path("state.json").write_text(
-                json.dumps(merged, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
-            PY
+Path("state.json").write_text(
+    json.dumps(merged, ensure_ascii=False, indent=2) + "\n",
+    encoding="utf-8",
+)
+'
             git add state.json
             GIT_EDITOR=true git rebase --continue
           fi
