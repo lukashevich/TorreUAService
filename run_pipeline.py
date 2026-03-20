@@ -1,3 +1,4 @@
+import html
 import json
 import os
 import re
@@ -1369,13 +1370,27 @@ def generate_ukrainian_post(client: OpenAI, item: Dict[str, Any]) -> Dict[str, s
     raise PipelineError(last_error or f"OpenAI failed to generate content for {item['url']}")
 
 
-def format_post(generated: Dict[str, str], source_url: str) -> str:
+def format_source_label(source_name: str, source_url: str) -> str:
+    if source_name.strip():
+        return source_name.strip()
+
+    hostname = urlparse(source_url).hostname or source_url
+    return hostname.replace("www.", "")
+
+
+def format_post(generated: Dict[str, str], source_name: str, source_url: str) -> str:
     prefix = "🚨 " if generated.get("is_local_crime") else ""
+    title = html.escape(f"{prefix}{generated['title']}")
+    line1 = html.escape(generated["line1"])
+    line2 = html.escape(generated["line2"])
+    source_label = html.escape(format_source_label(source_name, source_url))
+    source_link = html.escape(source_url, quote=True)
+
     return (
-        f"{prefix}{generated['title']}\n"
-        f"{generated['line1']}\n"
-        f"{generated['line2']}\n"
-        f"Джерело: {source_url}"
+        f"<b>{title}</b>\n\n"
+        f"{line1}\n"
+        f"{line2}\n\n"
+        f"<i>Джерело:</i> <a href=\"{source_link}\">{source_label}</a>"
     )
 
 
@@ -1383,7 +1398,11 @@ def send_to_telegram(session: requests.Session, text: str, image_url: Optional[s
     endpoint = "sendPhoto" if image_url else "sendMessage"
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/{endpoint}"
 
-    data: Dict[str, Any] = {"chat_id": CHAT_ID}
+    data: Dict[str, Any] = {
+        "chat_id": CHAT_ID,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": True,
+    }
     if image_url:
         data["photo"] = image_url
         data["caption"] = text
@@ -1498,7 +1517,7 @@ def main() -> None:
 
         try:
             generated = generate_ukrainian_post(client, item)
-            text = format_post(generated, item["url"])
+            text = format_post(generated, item["source_name"], item["url"])
             print("\n--- Telegram preview ---")
             print(text)
             print("--- End preview ---\n")
