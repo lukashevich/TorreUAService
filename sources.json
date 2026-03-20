@@ -1,0 +1,76 @@
+{
+  "sources": [
+    {
+      "name": "Torrevieja Noticias",
+      "url": "https://torrevieja.es/es/noticias",
+      "base_url": "https://torrevieja.es",
+      "source_type": "torrevieja",
+      "priority": "local",
+      "enabled": true
+    },
+    {
+      "name": "Valencia Noticias",
+      "url": "https://www.valencia.es/-/noticias",
+      "base_url": "https://www.valencia.es",
+      "source_type": "valencia",
+      "priority": "regional",
+      "headers": {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "es-ES,es;q=0.9,en;q=0.8",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Upgrade-Insecure-Requests": "1"
+      },
+      "enabled": true
+    },
+    {
+      "name": "Levante-EMV",
+      "url": "https://www.levante-emv.com/",
+      "base_url": "https://www.levante-emv.com",
+      "source_type": "levante",
+      "priority": "regional",
+      "enabled": true
+    },
+    {
+      "name": "Las Provincias",
+      "url": "https://www.lasprovincias.es/",
+      "base_url": "https://www.lasprovincias.es",
+      "source_type": "lasprovincias",
+      "priority": "regional",
+      "enabled": true
+    },
+    {
+      "name": "EL PAÍS España",
+      "url": "https://elpais.com/espana/",
+      "base_url": "https://elpais.com",
+      "source_type": "elpais",
+      "priority": "national",
+      "enabled": true
+    },
+    {
+      "name": "Ukrinform RSS",
+      "url": "https://www.ukrinform.net/rss/block-lastnews",
+      "base_url": "https://www.ukrinform.net",
+      "source_type": "rss",
+      "priority": "ukraine",
+      "allowed_domains": [
+        "ukrinform.net",
+        "www.ukrinform.net"
+      ],
+      "enabled": true
+    },
+    {
+      "name": "EU Migration RSS",
+      "url": "https://home-affairs.ec.europa.eu/news/rss_en",
+      "base_url": "https://home-affairs.ec.europa.eu",
+      "source_type": "rss",
+      "priority": "eu",
+      "allowed_domains": [
+        "ec.europa.eu",
+        "home-affairs.ec.europa.eu"
+      ],
+      "enabled": true
+    }
+  ]
+}

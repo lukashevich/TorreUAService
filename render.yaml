@@ -1,0 +1,30 @@
+services:
+  - type: worker
+    name: TorreUAService
+    runtime: python
+    plan: starter
+    region: frankfurt
+    autoDeployTrigger: commit
+    buildCommand: pip install -r requirements.txt
+    startCommand: python render_worker.py
+    disk:
+      name: data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.11
+      - key: BOT_TOKEN
+        sync: false
+      - key: CHAT_ID
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4.1-mini
+      - key: MAX_POSTS_PER_RUN
+        value: 2
+      - key: RUN_INTERVAL_SECONDS
+        value: 1800
+      - key: STATE_FILE
+        value: /var/data/state.json
